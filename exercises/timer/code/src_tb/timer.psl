@@ -6,7 +6,50 @@ use ieee.numeric_std.all;
 vunit timer_psl(timer) {
 
     default clock is rising_edge(clk);
+    signal value_u : unsigned(value'length - 1 downto 0);
+    value_u <= unsigned(value);
+
+    assume always (start and not mode) -> next_a[1 to 6] (not start);
+    assume always (start and mode)     -> next_a[1 to 28](not start);
+
+    assume rst;
+
+    short_count: assert always  (((mode = '0' and start = '1') -> next[6](trigger)) abort rst);
+    long_count:  assert always  (((mode = '1' and start = '1') -> next[28](trigger)) abort rst);
+
+    short_count_no_early_trigger: assert always  ((
+        (mode = '0' and start = '1') -> 
+        next_a[1 to 5](not trigger))
+        abort rst);
+
+    long_count_no_early_trigger:  assert always  ((
+        (mode = '1' and start = '1') -> 
+        next_a[1 to 27](not trigger))
+        abort rst);
+
+    trigger_stays_high_until_start: assert always ((
+        (trigger) -> (trigger until start))
+        abort rst); 
+
+    count_reset_6: assert always ((
+        (mode = '0' and start = '1') -> next
+        value_u = unsigned(to_unsigned(5, value'length)))
+        abort rst);
+
+    count_reset_28: assert always ((
+        (mode = '1' and start = '1') -> next
+        value_u = unsigned(to_unsigned(27, value'length)))
+        abort rst);
+
+    counter_decrement: assert always ((
+        (value_u /= 0) -> next
+        value_u = prev(value_u) - 1)
+        abort rst);
+
+    counter_stays_zero: assert always ((
+        (value_u = 0 and not start) -> next
+        value_u = unsigned(to_unsigned(0, value'length)))
+        abort rst);
 
 }
-
 
