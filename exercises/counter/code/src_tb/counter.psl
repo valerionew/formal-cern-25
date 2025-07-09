@@ -3,4 +3,18 @@ vunit counter_psl(counter) {
 
     default clock is rising_edge(clk_i);
 
+    signal value_u : unsigned(value_o'length - 1 downto 0);
+    signal should_be_upcounting : boolean;
+    signal should_be_downcounting : boolean;
+    value_u <= unsigned(value_o);
+
+    should_be_upcounting    <= ((up_ndown_i = '1') and (en_i = '1') and (load_i = '0'));
+    should_be_downcounting  <= ((up_ndown_i = '0') and (en_i = '1') and (load_i = '0'));
+
+    upcounting:   assert always ((should_be_upcounting   -> next (value_u = prev(value_u) + 1)) abort rst_i);
+    downcounting: assert always ((should_be_downcounting -> next (value_u = prev(value_u) - 1)) abort rst_i);
+
+    loading: assert always  (((load_i = '1')  -> next (value_u = unsigned(prev(d_i)))) abort rst_i);
+
+    not_enabled: assert always (((en_i = '0') and (load_i = '0') -> next (value_u = prev(value_u))) abort rst_i);
 }
