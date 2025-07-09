@@ -6,14 +6,34 @@ vunit min_max_psl(min_max_top) {
 
     signal clk_i : std_logic;
     default clock is rising_edge(clk_i);
+    signal Min_u : unsigned(Min_i'range);
+    signal Max_u : unsigned(Max_i'range);
+    signal Val_u : unsigned(Val_i'range);
+    signal val_within_range : boolean;
+
+    Min_u <= unsigned(Min_i);
+    Max_u <= unsigned(Max_i);
+    Val_u <= unsigned(Val_i);
+    val_within_range <= (Val_u >= Min_u) and (Val_u <= Max_u);
     
     -- Could be useful
     constant ones : std_logic_vector(15 downto 0) := (others => '1');
 
-    -- You can remove the following one. It is just here to have a successful check
-    dummy_assertion: assert always (true);
+    property val_in_minmax is Val_i >= Min_i and Val_i <= Max_i;
 
+    assume (Min_u < Max_u) and (Min_u >= 0) and (Max_u <= (2**16 - 1));
+
+    all_on:  assert always Com_i = "11" -> Leds_o = ones;
+    all_off: assert always Com_i = "10" -> Leds_o = (not ones);
 
     -- Just a suggestion: What about using a VHDL generate?
+    generate_leds: for i in 0 to 15 generate
+        min_leds_off: assert always (Com_i = "00") and i < Min_u -> Leds_o(i) = '0';
+        max_leds_off: assert always (Com_i = "00") and i > Max_u -> Leds_o(i) = '0';
+        high_leds_on: assert always (Com_i = "00") and 
+                                    (i >= Min_u and i <= Max_u) and 
+                                    val_within_range and
+                                    (Val_u <= i) -> (Leds_o(i) = '1');
+    end generate generate_leds;
 
 }
