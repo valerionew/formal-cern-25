@@ -6,5 +6,43 @@ vunit elevator_fsm_psl(elevator_fsm(fsm)) {
 
     assume {rst_i};
 
+    not_on_two_floors: assert never (floor0_o and floor1_o);
+
+    resets_on_floor0: assert always (
+        rst_i -> next floor0_o 
+    );
+
+    door_never_open_if_not_on_floor: assert never (open_o and not (floor0_o or floor1_o));
+
+    door_opens_when_floor0_and_called: assert always (
+        (floor0_o and call0_i) -> next open_o
+    ) abort rst_i;
+
+    door_opens_when_floor1_and_called: assert always (
+        (floor1_o and call1_i) -> next open_o
+    ) abort rst_i;
+
+    elevator_doesnt_move_if_calls_not_served0: assert always (
+        (floor0_o and not call1_i) -> next(floor0_o)
+    ) abort rst_i;
+
+    elevator_doesnt_move_if_calls_not_served1: assert always (
+        (floor1_o and not call0_i) -> next(floor1_o)
+    ) abort rst_i;
+
+    close_door_if_not_called0: assert always (
+        (floor0_o and not call0_i) -> next not open_o
+    ) abort rst_i;
+    close_door_if_not_called1: assert always (
+        (floor1_o and not call1_i) -> next not open_o
+    ) abort rst_i;
+
+    move_to_floor0_if_called0: assert always (
+        (floor1_o and not open_o and not call1_i and call0_i) -> next[2](floor0_o and open_o)
+    ) abort rst_i;
+    move_to_floor1_if_called1: assert always (
+        (floor0_o and not open_o and not call0_i and call1_i) -> next[2](floor1_o and open_o)
+    ) abort rst_i;
+
 }
 
