@@ -6,4 +6,18 @@ vunit blackbox_sequencer_psl(blackbox_sequencer) {
     -- All is sensitive to rising edge of clk
     default clock is rising_edge(clk);
 
+    -- we should observe twice the d; e; d sequence
+    cover_two_ded: cover {d;e;d;[+];d;e;d};
+
+    -- if we see e twice, we should see d three times immediately after
+    assert_eeddd: assert always ({e[*2]} |=> {d[*3]});
+
+    -- -- What we also know is that if a is high, then, if c is high during two clock cycles (starting
+    -- -- from the same cycle a is high), then we should, on the next clock cycle, observe b; not b; b.
+    -- -- Let’s start by writing an assertion that just checks that with a double implication, as in
+    -- -- this previous sentence.
+
+    assert_accbbb: assert always ({a} |-> ({c;c} |=> {b; not b; b}));
+    
+    cover_accbbb: cover {a and c; c; b; not b; b};
 }

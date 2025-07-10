@@ -51,5 +51,18 @@ vunit timer_psl(timer) {
         value_u = unsigned(to_unsigned(0, value'length)))
         abort rst);
 
+    -- Now we want to assert a few things using regular expressions 
+
+    count_counts_6: assert always ((
+        (mode = '0' and start = '1') |=> 
+        {value_u = 5; value_u = prev(value_u) - 1 [*5]; trigger}
+    ) abort rst);
+
+    count_counts_28: assert always ((
+        (mode = '1' and start = '1') |=> 
+        {value_u = 27; value_u = prev(value_u) - 1 [*27]; trigger}
+    ) abort rst);
+
+
 }
 
